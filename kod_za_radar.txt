@@ -1,0 +1,90 @@
+#include <LiquidCrystal.h>
+
+#define LED_PIN 16    // D0 - LED dioda
+#define BUTTON_PIN A0 // A0 - Prekidač (normally open, NO)
+
+#define TRIG_PIN 0    // D3 - HC-SR04 Trigger
+#define ECHO_PIN 2    // D4 - HC-SR04 Echo
+
+#define LCD_RS 5      // D1 - RS LCD
+#define LCD_E 4       // D2 - Enable LCD
+#define LCD_D4 14     // D5 - LCD 1602 D4
+#define LCD_D5 12     // D6 - LCD 1602 D5
+#define LCD_D6 13     // D7 - LCD 1602 D6
+#define LCD_D7 15     // D8 - LCD 1602 D7
+
+LiquidCrystal lcd(LCD_RS, LCD_E, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
+
+bool ledState = false; // LED počinje ugašena
+
+void setup() {
+    Serial.begin(115200);
+    Serial.println("ESP8266 runs successfully!");
+
+    pinMode(LED_PIN, OUTPUT);
+    digitalWrite(LED_PIN, LOW); // LED ugašen na početku
+
+    pinMode(TRIG_PIN, OUTPUT);
+    pinMode(ECHO_PIN, INPUT);
+
+    lcd.begin(16, 2);
+    lcd.setCursor(0, 0);
+    lcd.print("Distance:");
+}
+
+void loop() {
+    long duration;
+    float distance;
+
+    // 📡 HC-SR04 Mjerenje udaljenosti
+    digitalWrite(TRIG_PIN, LOW);
+    delayMicroseconds(2);
+    digitalWrite(TRIG_PIN, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(TRIG_PIN, LOW);
+
+    duration = pulseIn(ECHO_PIN, HIGH, 30000); // Timeout 30ms
+
+    lcd.setCursor(0, 1);
+
+    if (duration == 0) {
+        Serial.println("❌ No reflected signal!");
+        lcd.print("N/A      ");
+    } else {
+        distance = duration * 0.034 / 2;
+        Serial.print("✅ Distance: ");
+        Serial.print(distance);
+        Serial.println(" cm");
+
+        lcd.print("         "); // Očisti staru vrijednost
+        lcd.setCursor(0, 1);
+        lcd.print(distance, 1);
+        lcd.print(" cm");
+
+        // ✅ LED SE UPALE SAMO JEDNOM I OSTAJE UPALE
+        if (distance < 15 && !ledState) {
+            ledState = true;
+            digitalWrite(LED_PIN, HIGH);
+            Serial.println("🔥 LED on (Object detected)");
+        }
+    }
+
+    // 📌 PROVJERA PREKIDAČA - GASI LED AKO JE PRITISNUT
+    int sensorValue = analogRead(BUTTON_PIN);
+
+    Serial.print("A0 Reading: ");
+    Serial.println(sensorValue); // Prati što očitava prekidač
+
+    if (sensorValue > 1000) {  // Prag za pritisnut prekidač (kad A0 = 3.3V)
+        delay(50);  // Debounce
+        int confirmValue = analogRead(BUTTON_PIN);
+        if (confirmValue > 1000) {  // Ponovno očitaj da provjeriš je li zaista pritisnut
+            ledState = false;
+            digitalWrite(LED_PIN, LOW);
+            Serial.println("💡 LED off (Button pressed)");
+            delay(500); // Pauza da se izbjegne višestruko okidanje
+        }
+    }
+
+    delay(200);
+}

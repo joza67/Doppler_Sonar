@@ -1,0 +1,62 @@
+#include <Servo.h>  // Uključivanje Servo biblioteke za upravljanje servo motorom
+
+Servo myServo;  // Kreiranje objekta tipa Servo za kontrolu servo motora
+
+const int servoPin = 9;        // Definiranje pina na koji je spojen servo motor
+const int analogPin = A0;      // Definiranje analognog pina za očitavanje napona
+const int controlPin = 7;      // Definiranje digitalnog pina za kontrolu (D7)
+const float thresholdVoltage = 4.0;  // Prag napona za kontrolu pina D7
+const int initialAngle = 90;   // Početni kut serva (90 stupnjeva)
+const int finalAngle = 0;      // Krajnji kut serva (0 stupnjeva)
+const unsigned long confirmationDelay = 400;  // Vrijeme čekanja za potvrdu napona u milisekundama
+const int servoSpeedDelay = 50;  // Vrijeme kašnjenja između promjena kuta za kontrolu brzine serva
+
+void setup() {
+  Serial.begin(9600);          // Inicijalizacija serijske komunikacije pri brzini od 9600 bps
+  myServo.attach(servoPin);    // Povezivanje serva s definiranim pinom
+  myServo.write(initialAngle); // Postavljanje serva na početni kut (90 stupnjeva)
+  pinMode(controlPin, OUTPUT); // Postavljanje digitalnog pina 7 kao izlaz
+  digitalWrite(controlPin, LOW); // Inicijalno postavljanje pina 7 u LOW stanje
+  Serial.println("Sustav pokrenut. Servo na 90 stupnjeva.");  // Ispis poruke o inicijalizaciji
+}
+
+void loop() {
+  float voltage = readVoltage(analogPin);  // Očitavanje trenutnog napona na analognom pinu
+  Serial.print("Napon na A0: ");
+  Serial.print(voltage);
+  Serial.println(" V");  // Ispis očitanog napona u serijski monitor
+
+  // Provjera je li napon iznad ili jednak pragu za pokretanje serva
+  if (voltage >= thresholdVoltage) {
+    Serial.println("Napon iznad praga. Čekam 400 ms za potvrdu...");
+    delay(confirmationDelay);  // Čekanje 400 ms za potvrdu stabilnosti napona
+    voltage = readVoltage(analogPin);  // Ponovno očitavanje napona nakon čekanja
+    if (voltage >= thresholdVoltage) {
+      Serial.println("Napon potvrđen iznad praga. Postavljanje pina 7 na HIGH.");
+      digitalWrite(controlPin, HIGH);  // Postavljanje pina 7 u HIGH
+      delay(confirmationDelay);  // Zadržavanje pina 7 u HIGH stanju 400 ms
+      digitalWrite(controlPin, LOW);   // Vraćanje pina 7 u LOW
+      Serial.println("Pin 7 vraćen u LOW. Pokrećem servo prema 0 stupnjeva.");
+      for (int angle = initialAngle; angle >= finalAngle; angle--) {
+        myServo.write(angle);  // Postavljanje trenutnog kuta serva
+        delay(servoSpeedDelay);  // Kašnjenje između promjena kuta za kontrolu brzine
+      }
+      Serial.println("Servo dosegao 0 stupnjeva. Vraćam servo na 90 stupnjeva.");
+      for (int angle = finalAngle; angle <= initialAngle; angle++) {
+        myServo.write(angle);  // Postavljanje trenutnog kuta serva
+        delay(servoSpeedDelay);  // Kašnjenje između promjena kuta za kontrolu brzine
+      }
+    } else {
+      Serial.println("Napon pao ispod praga tijekom potvrde. Servo ostaje na 90 stupnjeva.");
+    }
+  } else {
+    Serial.println("Napon ispod praga. Servo ostaje na 90 stupnjeva.");
+  }
+
+  delay(500);  // Kratka pauza prije ponovnog očitavanja
+}
+
+float readVoltage(int pin) {
+  int analogValue = analogRead(pin);  // Očitavanje analogne vrijednosti s pina
+  return analogValue * (5.0 / 1023.0);  // Pretvaranje analogne vrijednosti u napon
+}

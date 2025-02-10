@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radar Animacija</title>
+
+    <style>
+        /* STILIZACIJA TIJELA STRANICE */
+        body {
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center; 
+            height: 100vh;
+            margin: 0;
+        }
+
+        /* GLAVNI KONTEJNER RADARA */
+        #container {
+            position: relative;
+            width: 70vmin;
+            height: 70vmin;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* RADAR (ČETVRTINA KRUŽNICE) */
+        #radar {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(0, 255, 0, 0.4), rgba(0, 0, 0, 0.8));
+            border-radius: 100%;
+            position: absolute;
+            clip-path: polygon(50% 50%, 100% 0, 0 0);
+            border: 3px solid lime;
+            z-index: 1;
+        }
+
+        /* OBRUB RADARA (5. segment - najudaljeniji) */
+        #radar-border {
+            width: 100%;
+            height: 100%;
+            border-radius: 100%;
+            position: absolute;
+            clip-path: polygon(50% 50%, 100% 0, 0 0);
+            border: 4px solid rgba(0, 255, 0, 0.9);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.7);
+            z-index: 2;
+        }
+
+        /* UDALJENOSNI SEGMENTI */
+        .distance-segment {
+            position: absolute;
+            border-radius: 100%;
+            clip-path: polygon(50% 50%, 100% 0, 0 0);
+            border: 2px solid rgba(0, 255, 0, 0.8);
+            box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+            z-index: 3;
+        }
+
+        #seg1 { width: 80%; height: 80%; }
+        #seg2 { width: 60%; height: 60%; }
+        #seg3 { width: 40%; height: 40%; }
+        #seg4 { width: 20%; height: 20%; }
+
+        /* KAZALJKA (GLAVNA) */
+        #line {
+            width: 0.5%;
+            height: 51%;
+            background-color: lime;
+            position: absolute;
+            left: 50%;
+            bottom: 50%;
+            transform-origin: bottom center;
+            animation: rotateLine 4s linear infinite alternate;
+            z-index: 6; /* KAZALJKA NA VRHU */
+            box-shadow: 0px 0px 20px 10px rgba(0, 255, 0, 0.5);
+        }
+
+        /* SJENA KAZALJKE – SADA CENTRIRANA */
+        #line-shadow {
+            width: 10%;
+            height: 51%;
+            background: linear-gradient(to right, rgba(0, 255, 0, 0) 10%, rgba(0, 255, 0, 0.5) 50%, rgba(0, 255, 0, 0) 90%);
+            position: absolute;
+            left: 45%;
+            bottom: 50%;
+            transform-origin: bottom center;
+            animation: rotateLine 4s linear infinite alternate;
+            z-index: 5; /* MALO ISPOD KAZALJKE */
+            clip-path: polygon(50% 100%, 100% 0, 0 0);
+        }
+
+        /* ANIMACIJA KAZALJKE */
+        @keyframes rotateLine {
+            0% { transform: rotate(-45deg); }
+            50% { transform: rotate(45deg); }
+            50.1% { transform: rotate(45deg); }
+            100% { transform: rotate(-45deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="radar"></div> <!-- Radar pozadina -->
+        <div id="radar-border"></div> <!-- Obrub radara -->
+
+        <!-- 4 segmentirana dijela unutar radara -->
+        <div class="distance-segment" id="seg1"></div>
+        <div class="distance-segment" id="seg2"></div>
+        <div class="distance-segment" id="seg3"></div>
+        <div class="distance-segment" id="seg4"></div>
+
+        <div id="line-shadow"></div> <!-- Sjena kazaljke (SADA CENTRIRANA) -->
+        <div id="line"></div> <!-- Kazaljka koja se okreće -->
+    </div>
+</body>
+</html>
